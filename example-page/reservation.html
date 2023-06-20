@@ -1,0 +1,93 @@
+<html>
+<head>
+    <title>Reservation</title>
+</head>
+<body>
+    <h1>Reservation</h1>
+    <p>Reservation page content goes here.</p>
+    <h5>Create new Reservation</h5>
+    <form>
+        <input type="text" name="name" placeholder="Name">
+        <input type="text" name="email" placeholder="Email">
+        <input type="text" name="phone" placeholder="Phone">
+        <input type="text" name="date" placeholder="Date">
+        <input type="text" name="time" placeholder="Time">
+        <button type="button" onclick="addReservation()">Submit</button>
+    </form>
+    <h5>Reservation List</h5>
+    <button type="button" onclick="getReservations()">Get All</button>
+    <button type="button" onclick="getReservations(true)">Get Today</button>
+
+    <div id="reservations">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="reservation-list">
+            </tbody>
+        </table>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.2/socket.io.js"></script>
+    <script>
+        const socket = io('ws://localhost:3000', {})
+        socket.on('connect', () => {
+            console.log('connected')
+        });
+
+        function addReservation() {
+            const name = document.querySelector('input[name="name"]').value
+            const email = document.querySelector('input[name="email"]').value
+            const phone = document.querySelector('input[name="phone"]').value
+            const date = document.querySelector('input[name="date"]').value
+            const time = document.querySelector('input[name="time"]').value
+            const reservation = {
+                name,
+                email,
+                phone,
+                date,
+                time
+            }
+            socket.emit('function', 'insertData', {
+                collection: 'reservation',
+                data: reservation
+            },
+            () => {
+                console.log('inserted')
+            });
+        }
+
+        function getReservations(today) {
+            socket.emit('function', 'getData', {
+                collection: 'reservation',
+                filter: today ? {
+                    date: new Date().toISOString().split('T')[0]
+                } : {}
+            },
+            (reservations) => {
+                console.log(reservations)
+                const reservationList = document.querySelector('#reservation-list')
+                reservationList.innerHTML = ''
+                Object.values(reservations).forEach(reservation => {
+                    const row = document.createElement('tr')
+                    row.innerHTML = `
+                        <td>${reservation.name}</td>
+                        <td>${reservation.email}</td>
+                        <td>${reservation.phone}</td>
+                        <td>${reservation.date}</td>
+                        <td>${reservation.time}</td>
+                    `
+                    reservationList.appendChild(row)
+                })
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<html>
+    <head>
+        <title>View Count</title>
+    </head>
+    <body>
+        Total Count: <span id="count"></span>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.2/socket.io.js"></script>
+        <script>
+            let view = 0;
+            const socket = io('ws://localhost:3000', {})
+            socket.on('connect', () => {
+                console.log('connected')
+            });
+            socket.emit('function', 'getData', {
+                collection: 'count',
+                filter: {
+                    url: window.location.href
+                }
+            }, (counts) => {
+                if (Object.keys(counts).length > 0) {
+                    view = counts[Object.keys(counts)[0]].count;
+                    socket.emit('function', 'updateData', {
+                        collection: 'count',
+                        key: Object.keys(counts)[0],
+                        data: {
+                            count: view + 1
+                        }
+                    }, () => {
+                        console.log('updated')
+                    });
+                } else {
+                    socket.emit('function', 'insertData', {
+                        collection: 'count',
+                        data: {
+                            url: window.location.href,
+                            count: 1
+                        }
+                    }, () => {
+                        console.log('inserted')
+                    });
+                }
+                document.querySelector('#count').innerHTML = view;
+            });
+        </script>
+    </body>
+</html>
